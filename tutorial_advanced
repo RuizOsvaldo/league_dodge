@@ -1,0 +1,318 @@
+# 🪨 Falling Rocks Game – Tutorial for Kids!
+
+Welcome! In this tutorial, you are going to build a **falling rocks game** using **MakeCode Arcade**. You will control a character that catches yummy burgers, dodges dangerous rocks, and grabs special power-ups to slow everything down. Let's go! 🎮
+
+---
+
+## 🧰 What You Need
+
+- A computer or tablet
+- Go to **[MakeCode Arcade](https://arcade.makecode.com)** in your web browser
+- Click **"New Project"** and give it a fun name like "Falling Rocks!"
+- Click the **JavaScript** tab at the top so you can type code
+
+---
+
+## 🗂️ Table of Contents
+
+1. Set Up the Screen
+2. Create Your Player
+3. Make Rocks Fall
+4. Make Burgers Fall
+5. Make Power-Ups Appear
+6. What Happens When Things Collide
+7. Make the Game Get Harder Over Time
+8. The Slow Rocks Power (a Special Function)
+
+---
+
+## Step 1 – Set Up the Screen 🖥️
+
+This is the very first thing we do. We tell the game what color the background should be, and we get our score and lives ready.
+
+```javascript
+scene.setBackgroundColor(1)
+info.setLife(3)
+info.setScore(0)
+```
+
+**What this does:**
+- `setBackgroundColor(1)` paints the background **dark blue** (color number 1).
+- `setLife(3)` gives your player **3 hearts** (lives) before game over.
+- `setScore(0)` starts your score at **zero**.
+
+---
+
+## Step 2 – Create Your Player 🧍
+
+Now we make the little character you will control! The big block of letters and dots between the backticks is a **pixel drawing** of your character. MakeCode turns it into a picture automatically.
+
+```javascript
+let playerSprite = sprites.create(img`
+    ........................
+    .....ffff...............
+    ...fff22fff.............
+    ..fff2222fff............
+    .fffeeeeeefff...........
+    .ffe222222eef...........
+    .fe2ffffff2ef...........
+    .ffffeeeeffff...........
+    ffefbf44fbfeff..........
+    fee41fddf14eef..........
+    .ffffdddddeef...........
+    fddddf444eef............
+    fbbbbf2222f4e...........
+    fbbbbf2222fd4...........
+    .fccf45544f44...........
+    ..ffffffff..............
+    ....ff..ff..............
+    ........................
+    `, SpriteKind.Player)
+
+controller.moveSprite(playerSprite, 120, 0)
+playerSprite.setFlag(SpriteFlag.StayInScreen, true)
+playerSprite.y = 110
+```
+
+**What this does:**
+- `sprites.create(...)` draws your character on the screen.
+- `SpriteKind.Player` tells the game **"this is the player!"**
+- `controller.moveSprite(playerSprite, 120, 0)` lets you move the player **left and right** using the arrow keys. The `120` is how fast they move. The `0` means they can't move up or down.
+- `StayInScreen` makes sure your player **never walks off the edge** of the screen.
+- `playerSprite.y = 110` places your player **near the bottom** of the screen so falling things can land on them.
+
+---
+
+## Step 3 – Make Rocks Fall 🪨
+
+Rocks are the **enemies**! They fall from the top of the screen and you need to dodge them.
+
+```javascript
+let fallSpeed = 40
+let spawnTime = 800
+
+game.onUpdateInterval(spawnTime, function () {
+    rock = sprites.create(img`
+        . . c c c c . . 
+        . c b d d d c . 
+        c b d d d d d c 
+        c b b d d d d c 
+        c b d b d d b c 
+        c c b d b b b c 
+        c c c b d d b c 
+        c c b b c c c c 
+        `, SpriteKind.Enemy)
+    rock.x = randint(10, 150)
+    rock.y = 0
+    rock.vy = randint(fallSpeed, fallSpeed + 40)
+    rock.setFlag(SpriteFlag.AutoDestroy, true)
+})
+```
+
+**What this does:**
+- `game.onUpdateInterval(spawnTime, ...)` runs the code inside every **800 milliseconds** (less than 1 second!). Every time it runs, a new rock appears.
+- `rock.x = randint(10, 150)` puts the rock at a **random spot** across the screen so you never know where it will come from.
+- `rock.y = 0` starts the rock at the **very top** of the screen.
+- `rock.vy = randint(fallSpeed, fallSpeed + 40)` makes the rock fall downward. A bigger number means **faster**!
+- `AutoDestroy` means the rock disappears on its own if it falls off the bottom, so the game doesn't slow down.
+
+---
+
+## Step 4 – Make Burgers Fall 🍔
+
+Burgers are the **good things** to catch! Each one gives you a point.
+
+```javascript
+game.onUpdateInterval(2000, function () {
+    burger = sprites.create(img`
+        . . . . c c c b b b b b . . . . 
+        . . c c b 4 4 4 4 4 4 b b b . . 
+        . c c 4 4 4 4 4 5 4 4 4 4 b c . 
+        . e 4 4 4 4 4 4 4 4 4 5 4 4 e . 
+        e b 4 5 4 4 5 4 4 4 4 4 4 4 b c 
+        e b 4 4 4 4 4 4 4 4 4 4 5 4 4 e 
+        e b b 4 4 4 4 4 4 4 4 4 4 4 b e 
+        . e b 4 4 4 4 4 5 4 4 4 4 b e . 
+        8 7 e e b 4 4 4 4 4 4 b e e 6 8 
+        8 7 2 e e e e e e e e e e 2 7 8 
+        e 6 6 2 2 2 2 2 2 2 2 2 2 6 c e 
+        e c 6 7 6 6 7 7 7 6 6 7 6 c c e 
+        e b e 8 8 c c 8 8 c c c 8 e b e 
+        e e b e c c e e e e e c e b e e 
+        . e e b b 4 4 4 4 4 4 4 4 e e . 
+        . . . c c c c c e e e e e . . . 
+        `, SpriteKind.Food)
+    burger.x = randint(10, 150)
+    burger.y = 0
+    burger.vy = randint(30, 60)
+    burger.setFlag(SpriteFlag.AutoDestroy, true)
+})
+```
+
+**What this does:**
+- A new burger appears every **2 seconds**.
+- Just like rocks, burgers fall from a random spot at the top.
+- `SpriteKind.Food` tells the game these are the good guys!
+
+---
+
+## Step 5 – Make Power-Ups Appear ⭐
+
+Power-ups are **rare and special**. They only appear every 15 seconds! If you catch one, you get an extra life AND all the rocks slow down for 3 seconds.
+
+```javascript
+game.onUpdateInterval(15000, function () {
+    powerup = sprites.create(img`
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . 2 2 . . . . . . . 
+        . . . . . . 3 1 1 3 . . . . . . 
+        . . . . . 2 1 1 1 1 2 . . . . . 
+        . . . . . 2 1 1 1 1 2 . . . . . 
+        . . . . . . 3 1 1 3 . . . . . . 
+        . . . . . . . 2 2 . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        `, SpriteKind.PowerUp)
+    powerup.x = randint(10, 150)
+    powerup.y = 0
+    powerup.vy = randint(30, 50)
+    powerup.setFlag(SpriteFlag.AutoDestroy, true)
+})
+```
+
+**What this does:**
+- Every **15 seconds**, a shiny power-up drops from the top.
+- It works just like rocks and burgers – random position, falls down, disappears at the bottom.
+- `SpriteKind.PowerUp` is a **brand new kind** of sprite we created specially for this game.
+
+---
+
+## Step 6 – What Happens When Things Touch (Collisions!) 💥
+
+This is the exciting part! We tell the game what to do when your player **touches** different things.
+
+### 🍔 Catching a Burger
+
+```javascript
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+    otherSprite.destroy(effects.hearts, 100)
+    info.changeScoreBy(1)
+})
+```
+
+- When your player touches a burger, the burger **disappears with a hearts effect** 💗.
+- Your score goes **up by 1**.
+
+### ⭐ Catching a Power-Up
+
+```javascript
+sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUp, function (sprite, otherSprite) {
+    otherSprite.destroy(effects.smiles, 100)
+    info.changeLifeBy(1)
+    slowRocks(3000)
+})
+```
+
+- The power-up disappears with a **smiley face effect** 😊.
+- You gain **+1 life** (heart).
+- The special `slowRocks` function runs for **3 seconds**!
+
+### 🪨 Getting Hit by a Rock
+
+```javascript
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    otherSprite.destroy(effects.disintegrate, 200)
+    info.changeLifeBy(-1)
+    pause(200)
+    if (info.life() <= 0) {
+        game.over(false, effects.melt)
+    }
+})
+```
+
+- The rock **shatters** with a cool disintegrate effect.
+- You lose **-1 life** 💔.
+- After a tiny pause, the game checks: **do you have 0 lives left?**
+- If yes → **Game Over!** with a melting effect. 😢
+
+---
+
+## Step 7 – Make the Game Get Harder Over Time 📈
+
+Games are more fun when they get trickier! Every 10 seconds, rocks fall faster AND appear more often.
+
+```javascript
+game.onUpdateInterval(10000, function () {
+    fallSpeed += 10
+    if (spawnTime > 300) {
+        spawnTime += -100
+    }
+})
+```
+
+**What this does:**
+- `fallSpeed += 10` makes every new rock fall **10 units faster** than before.
+- `spawnTime += -100` makes rocks appear **100 milliseconds sooner** each time. So instead of every 800ms, it becomes 700ms, then 600ms… all the way down to 300ms! That's super fast! 🚀
+- The `if (spawnTime > 300)` check makes sure the game **never gets impossibly fast** – 300ms is the speed limit.
+
+---
+
+## Step 8 – The Slow Rocks Power ❄️ (A Special Function)
+
+This is a **function** – think of it like a helper robot you can call whenever you need it. This one slows down all rocks for a little while.
+
+```javascript
+function slowRocks(duration: number) {
+    enemies = sprites.allOfKind(SpriteKind.Enemy)
+    originalSpeeds = []
+    for (let s of enemies) {
+        originalSpeeds.push(s.vy)
+        s.vy = Math.max(10, s.vy / 2)
+    }
+    pause(duration)
+    for (let i = 0; i <= enemies.length - 1; i++) {
+        if (i < originalSpeeds.length) {
+            enemies[i].vy = originalSpeeds[i]
+        }
+    }
+}
+```
+
+**What this does, step by step:**
+1. `sprites.allOfKind(SpriteKind.Enemy)` finds **every rock** currently on the screen.
+2. We **remember how fast** each rock was going by saving the speeds in a list called `originalSpeeds`.
+3. We then **cut each rock's speed in half** (`s.vy / 2`). `Math.max(10, ...)` makes sure no rock goes slower than 10 – otherwise it might just stop completely!
+4. `pause(duration)` waits for **3 seconds** (3000 milliseconds) while the rocks are slow.
+5. After the pause, we **give every rock its old speed back** so the game returns to normal.
+
+---
+
+## 🎉 You Did It!
+
+Here's a quick recap of everything in your game:
+
+| Thing | What it does |
+|---|---|
+| 🧍 Player | You! Move left and right to dodge and catch things |
+| 🪨 Rock (Enemy) | Avoid these! You lose a life if hit |
+| 🍔 Burger (Food) | Catch these! You earn a point |
+| ⭐ Power-Up | Catch these! Get a life + slow all rocks for 3 seconds |
+| 📈 Difficulty | Every 10 seconds, rocks fall faster and more often |
+
+---
+
+## 💡 Challenge Ideas
+
+- Can you **change the background color** to something you like better?
+- Can you make the player **move faster or slower**?
+- What if burgers gave you **2 points** instead of 1?
+- Can you add a **new kind of enemy** that moves differently?
+
+Have fun and keep coding! 🚀
